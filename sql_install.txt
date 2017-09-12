@@ -1,0 +1,2 @@
+INSERT IGNORE INTO `dle_admin_sections` VALUES (NULL, 'kafedra', '<font color=teal>Управление <u>К</u>афедрами </font>', 'Управления кафедральными страницами', 'kafedra.png', '1');
+
