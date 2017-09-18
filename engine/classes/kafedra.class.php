@@ -369,10 +369,58 @@ class Kafedra{
     {
         $this->visible = $visible;
     }
-
-
-
-
+    public function getKafedraFromArray($array){
+        $this->setId($array['id']);
+        $this->setName($array['name']);
+        $this->setAltName($array['alt_name']);
+        $this->setSince($array['since']);
+        $this->setAddress($array['address']);
+        $this->setPhone($array['phone']);
+        $this->setEmail($array['email']);
+        $this->setZavId($array['zav_id']);
+        $this->setUpdaterId($array['updater_id']);
+        $this->setInfo($array['info']);
+        $this->setHistory($array['history']);
+        $this->setAspir($array['aspir']);
+        $this->setEdu($array['edu']);
+        $this->setProf($array['prof']);
+        $this->setFilials($array['filials']);
+        $this->setScience($array['science']);
+        $this->setSite($array['site']);
+        $this->setLastUpdate($array['lastUpdate']);
+        $this->setMoreCatKafedra($array['more_cat_kafedra']);
+        $this->setVisible($array['visible']);
+    }
+    public function getKafedraFromDB($id){
+        global $db;
+        if (!isset($id)) {
+            return FALSE;
+        }
+        $id = intval($id);
+        $row = $db->super_query("SELECT * FROM " . USERPREFIX . "_kafedra WHERE id = {$id}");
+        if ($row){
+            $this->setId($row['id']);
+            $this->setName($row['name']);
+            $this->setAltName($row['alt_name']);
+            $this->setSince($row['since']);
+            $this->setAddress($row['address']);
+            $this->setPhone($row['phone']);
+            $this->setEmail($row['email']);
+            $this->setZavId($row['zav_id']);
+            $this->setUpdaterId($row['updater_id']);
+            $this->setInfo($row['info']);
+            $this->setHistory($row['history']);
+            $this->setAspir($row['aspir']);
+            $this->setEdu($row['edu']);
+            $this->setProf($row['prof']);
+            $this->setFilials($row['filials']);
+            $this->setScience($row['science']);
+            $this->setSite($row['site']);
+            $this->setLastUpdate($row['lastUpdate']);
+            $this->setMoreCatKafedra($row['more_cat_kafedra']);
+            $this->setVisible($row['visible']);
+        }
+    }
 
 
 }

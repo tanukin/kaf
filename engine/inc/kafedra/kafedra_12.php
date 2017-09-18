@@ -9,7 +9,13 @@ $a = $_GET['a'] ? trim( $_GET['a'] ) : '';
 if(in_array($a, array('allkaf', 'allpeople')) && file_exists(ROOT_DIR . '/engine/inc/kafedra/'.$a.'.php')){
     @require_once( ROOT_DIR . '/engine/inc/kafedra/'.$a.'.php' );
 }elseif(isset($_GET['a'])){
-    $body = "Раздел не найден.";
+    $body = <<<HTML
+    <div class="panel-body">
+           <div style="display: table;min-height:100px;width:100%;">
+    	        <div class="text-center" style="display: table-cell;vertical-align:middle;">- Раздел не найден -</div>
+	       </div>     
+    </div>
+HTML;
 }elseif(empty($_GET['a'])){
     $body = "";
     $information = "Возможно разместить в данном блоке информацию по данному модулю, возможно какую то обучающую информацию.";
@@ -55,9 +61,7 @@ if($body) {
   <div class="panel-heading">
         {$header}
   </div>
-  <div class="panel-body">
         {$body}
-   </div>
 </div>
 
 
