@@ -31,9 +31,13 @@ class Person {
     private $photo;
     private $lastupdate;
 
+    const NODEGREE = 0;
+    const CANDIDATE = 1;
+    const DOCTOR = 2;
+
     function __construct($id = 0) {
         if ($id != 0) {
-            $this->getPeopleFromDB($id);
+            $this->getPersonFromDB($id);
         }
     }
     /**
@@ -118,7 +122,7 @@ class Person {
     public function getNameKafedra() {
         global $db;
         if ($db instanceof db) {
-            $row = $db->super_query("SELECT name FROM ". USERPREFIX . "_kafedra WHERE id = {$this->getIdKafedra()} LIMIT 1");
+            $row = $db->super_query("SELECT name FROM ". USERPREFIX . "_kafedra WHERE id = '{$this->getIdKafedra()}' LIMIT 1");
             return $row['name'];
         }
     }
@@ -168,14 +172,15 @@ class Person {
      */
     public function setUchStep($uch_step)
     {
-        switch (intval($uch_step)){
+        $this->uch_step = intval($uch_step);
+       /* switch (intval($uch_step)){
             case 2: $this->uch_step = 2;
                 break;
             case 1: $this->uch_step = 1;
                 break;
             default: $this->uch_step = 0;
                      $this->id_uch_step = 0;
-        }
+        }*/
     }
 
     /**
@@ -188,17 +193,14 @@ class Person {
 
     public function getNameUchStep()
     {
-        global $db;
-        if ($db instanceof db) {
-            $row = $db->super_query("SELECT stepen FROM ". USERPREFIX . "_people_ustep WHERE id = {$this->getIdUchStep()} LIMIT 1");
-            return $row['stepen'];
-        }
-
+        $uchStep = new UchStep($this->id);
+        return $uchStep->getStepen();
     }
 
     /**
      * @param mixed $id_uch_step
      */
+
     public function setIdUchStep($id_uch_step)
     {
         $this->id_uch_step = intval($id_uch_step);
@@ -511,11 +513,10 @@ class Person {
         $this->setName($_REQUEST[name]);
         $this->setPatronymic($_REQUEST[patronymic]);
         $this->setIdKafedra($_REQUEST[id_kafedra]);
-        if ($_REQUEST[skill] == "on")
+        if ($_REQUEST[skill] == 'on')
             $this->setSkill(1);
         else
             $this->setSkill(0);
-
         $this->setUchStep($_REQUEST[uch_step]);
         $this->setIdUchStep($_REQUEST[id_uch_step]);
         $this->setIdUchZvan($_REQUEST[id_uch_zvan]);
@@ -525,7 +526,6 @@ class Person {
         $this->setBiography($_REQUEST[biography]);
         $this->setScience($_REQUEST[science]);
         $this->setCountPub($_REQUEST[count_pub]);
-
         foreach ($_REQUEST[pov_kvalif] as $pov_kvalif) {
             $arr_pov_kvalif[] = trim($pov_kvalif);
         }
@@ -537,18 +537,35 @@ class Person {
         }
         $this->setPovKvalif($arr_pov_kvalif);
         $this->setStaz([$_REQUEST[staz_obs], $_REQUEST[staz_ped]]);
-
         $this->setTopPub($arr_top_pub);
         $this->setCountTrained($_REQUEST[count_trained]);
         $this->setCourse($arr_course);
         $this->setAddress($_REQUEST[address]);
         $this->setPhone($_REQUEST[phone]);
         $this->setEmail($_REQUEST[email]);
-        $this->setPhoto($_REQUEST[photo]);
 
+        if(!$_FILES[photo][error]){
+            if ($_FILES[photo][error] == 0)
+                $this->uploadPhoto();
 
+            switch ($_FILES[photo][error]){
+                case 1: $describeError = "Размер принятого файла превысил максимально допустимый размер, разрешонный на сервере";
+                    break;
+                case 2: $describeError = "Размер принятого файла превысил максимально допустимый размер";
+                    break;
+                case 3: $describeError = "Загружаемый файл был получен только частично";
+                    break;
+                case 6: $describeError = "Отсутствует временная папка";
+                    break;
+                case 7: $describeError = "Не удалось записать файл на диск";
+                    break;
+                default: $describeError = "Файл не был загружен";
+            }
+            if(!$describeError)
+                msg("error", "Ошибка", $describeError, "javascript:history.go(-1)");
+
+        }
     }
-
     public function getPersonFromRow($row = null){
         if ($row) {
             $this->id = stripslashes($row[id]);
@@ -592,96 +609,96 @@ class Person {
         // Если уч.звание не указано, то обязательно д.б. выбрfyye. должность
         // Если кандидат или доктор - должен быть ид уч.степени
         // Если не доктор и не кандидат - не должно быть ид уч.степени и специальности по диплому
-        if (    $this->family != ""
-            &&  $this->name != ""
-            &&  $this->patronymic != ""
-            &&  $this->id_kafedra != null
-            &&  (($this->id_uch_zvan == 0 && $this->id_capacity != 0) || $this->id_uch_zvan != 0)
-            &&  (($this->uch_step != 0 && $this->id_uch_step > 0) || ($this->uch_step == 0 && $this->id_uch_step == 0 && $this->speciality == ""))) {
-            // Не кандидат и не доктор не могут иметь ни уч.степени, ни уч.звания, ни специальности по диплому
-                if ($this->uch_step == 0) {
-                    $this->id_uch_step = 0;
-                    $this->id_uch_zvan = 0;
-                    $this->speciality = '';
-                }
-            // Если в базе есть ссылка на фотку, а файл отсутствует
-            if ($this->photo != "") {
-                if (    !file_exists(ROOT_DIR . "/uploads/kafedra/people/" . $this->photo)
-                    ||  !is_file(ROOT_DIR . "/uploads/kafedra/people/" . $this->photo)) {
-                    $this->photo = "";
-                }
-            }
-            //Inserts the new person into DB
-            if ($this->id == null || $this->id == 0) {
-                $insert_sql = "INSERT INTO " . USERPREFIX . "_people(id, family, name, patronymic, id_kafedra, skill, uch_step, id_uch_step, id_uch_zvan, id_capacity, speciality, award, biography, pov_kvalif, staz, science, count_pub, top_pub, count_trained, course, adres, phone, email, photo, lastupdate) "
-                    . " VALUES ("
-                    . "'', "
-                    . "'" . $db->safesql($this->family) . "', "
-                    . "'" . $db->safesql($this->name) . "', "
-                    . "'" . $db->safesql($this->patronymic) . "', "
-                    . "'" . $db->safesql($this->id_kafedra) . "', "
-                    . "'" . $db->safesql($this->skill) . "', "
-                    . "'" . $db->safesql($this->uch_step) . "', "
-                    . "'" . $db->safesql($this->id_uch_step) . "', "
-                    . "'" . $db->safesql($this->id_uch_zvan) . "', "
-                    . "'" . $db->safesql($this->id_capacity) . "', "
-                    . "'" . $db->safesql($this->speciality) . "', "
-                    . "'" . $db->safesql($this->award) . "', "
-                    . "'" . $db->safesql($this->biography) . "', "
-                    . "'" . $db->safesql($this->pov_kvalif) . "', "
-                    . "'" . $db->safesql($this->staz) . "', "
-                    . "'" . $db->safesql($this->science) . "', "
-                    . "'" . $db->safesql($this->count_pub) . "', "
-                    . "'" . $db->safesql($this->top_pub) . "', "
-                    . "'" . $db->safesql($this->count_trained) . "', "
-                    . "'" . $db->safesql($this->course) . "', "
-                    . "'" . $db->safesql($this->address) . "', "
-                    . "'" . $db->safesql($this->phone) . "', "
-                    . "'" . $db->safesql($this->email) . "', "
-                    . "'" . $db->safesql($this->photo) . "', "
-                    . "'" . mktime() . "'"
-                    . ")";
-//print($insert_sql);exit;
-                $db->query($insert_sql, false);
+            if (    $this->family != ""
+                &&  $this->name != ""
+                &&  $this->patronymic != ""
+                &&  $this->id_kafedra != null
+                &&  (($this->id_uch_zvan == 0 && $this->id_capacity != 0) || $this->id_uch_zvan != 0)
+                &&  (($this->uch_step != 0 && $this->id_uch_step > 0) || ($this->uch_step == 0 && $this->id_uch_step == 0 && $this->speciality == ""))) {
+                // Не кандидат и не доктор не могут иметь ни уч.степени, ни уч.звания, ни специальности по диплому
+                    if ($this->uch_step == 0) {
+                        $this->id_uch_step = 0;
+                        $this->id_uch_zvan = 0;
+                        $this->speciality = '';
+                    }
+                    // Если в базе есть ссылка на фотку, а файл отсутствует
+                    if ($this->photo != "") {
+                        if (    !file_exists(ROOT_DIR . "/uploads/kafedra/people/" . $this->photo)
+                            ||  !is_file(ROOT_DIR . "/uploads/kafedra/people/" . $this->photo)) {
+                            $this->photo = "";
+                        }
+                    }
+                    //Inserts the new person into DB
+                    if ($this->id == null || $this->id == 0) {
+                        $insert_sql = "INSERT INTO " . USERPREFIX . "_people(id, family, name, patronymic, id_kafedra, skill, uch_step, id_uch_step, id_uch_zvan, id_capacity, speciality, award, biography, pov_kvalif, staz, science, count_pub, top_pub, count_trained, course, address, phone, email, photo, lastupdate) "
+                            . " VALUES ("
+                            . "'', "
+                            . "'" . $db->safesql($this->family) . "', "
+                            . "'" . $db->safesql($this->name) . "', "
+                            . "'" . $db->safesql($this->patronymic) . "', "
+                            . "'" . $db->safesql($this->id_kafedra) . "', "
+                            . "'" . $db->safesql($this->skill) . "', "
+                            . "'" . $db->safesql($this->uch_step) . "', "
+                            . "'" . $db->safesql($this->id_uch_step) . "', "
+                            . "'" . $db->safesql($this->id_uch_zvan) . "', "
+                            . "'" . $db->safesql($this->id_capacity) . "', "
+                            . "'" . $db->safesql($this->speciality) . "', "
+                            . "'" . $db->safesql($this->award) . "', "
+                            . "'" . $db->safesql($this->biography) . "', "
+                            . "'" . $db->safesql($this->pov_kvalif) . "', "
+                            . "'" . $db->safesql($this->staz) . "', "
+                            . "'" . $db->safesql($this->science) . "', "
+                            . "'" . $db->safesql($this->count_pub) . "', "
+                            . "'" . $db->safesql($this->top_pub) . "', "
+                            . "'" . $db->safesql($this->count_trained) . "', "
+                            . "'" . $db->safesql($this->course) . "', "
+                            . "'" . $db->safesql($this->address) . "', "
+                            . "'" . $db->safesql($this->phone) . "', "
+                            . "'" . $db->safesql($this->email) . "', "
+                            . "'" . $db->safesql($this->photo) . "', "
+                            . "'" . mktime() . "'"
+                            . ")";
+           // print_r($insert_sql); exit;
+                        $db->query($insert_sql, false);
 
-                return true;
+                        return true;
+                    }
+                    //Updates the person (with id = id) into DB
+                    else {
+                        $update_sql = "UPDATE " . USERPREFIX . "_people SET  "
+                            . "family='" . $db->safesql($this->family) . "', "
+                            . "name='" . $db->safesql($this->name) . "', "
+                            . "patronymic='" . $db->safesql($this->patronymic) . "', "
+                            . "id_kafedra='" . $db->safesql($this->id_kafedra) . "', "
+                            . "skill='" . $db->safesql($this->skill) . "', "
+                            . "uch_step='" . $db->safesql($this->uch_step) . "', "
+                            . "id_uch_step='" . $db->safesql($this->id_uch_step) . "', "
+                            . "id_uch_zvan='" . $db->safesql($this->id_uch_zvan) . "', "
+                            . "id_capacity='" . $db->safesql($this->id_capacity) . "', "
+                            . "speciality='" . $db->safesql($this->speciality) . "', "
+                            . "award='" . $db->safesql($this->award) . "', "
+                            . "biography='" . $db->safesql($this->biography) . "', "
+                            . "pov_kvalif='" . $db->safesql($this->pov_kvalif) . "', "
+                            . "staz='" . $db->safesql($this->staz) . "', "
+                            . "science='" . $db->safesql($this->science) . "', "
+                            . "count_pub='" . $db->safesql($this->count_pub) . "', "
+                            . "top_pub='" . $db->safesql($this->top_pub) . "', "
+                            . "count_trained='" . $db->safesql($this->count_trained) . "', "
+                            . "course='" . $db->safesql($this->course) . "', "
+                            . "address='" . $db->safesql($this->address) . "', "
+                            . "phone='" . $db->safesql($this->phone) . "', "
+                            . "email='" . $db->safesql($this->email) . "', "
+                            . "photo='" . $db->safesql($this->photo) . "', "
+                            . "lastupdate='" . mktime() . "' "
+                            . "WHERE id='" . intval($this->id) . "'";
+           // print_r($update_sql); exit;
+                        $db->query($update_sql);
+                        return true;
+                    }
+                } else {
+                $this->removePhoto();
+                return false;
             }
-            //Updates the person (with id = id) into DB
-            else {
-
-                $update_sql = "UPDATE " . USERPREFIX . "_people SET  "
-                    . "family='" . $db->safesql($this->family) . "', "
-                    . "name='" . $db->safesql($this->name) . "', "
-                    . "patronymic='" . $db->safesql($this->patronymic) . "', "
-                    . "id_kafedra='" . $db->safesql($this->id_kafedra) . "', "
-                    . "skill='" . $db->safesql($this->skill) . "', "
-                    . "uch_step='" . $db->safesql($this->uch_step) . "', "
-                    . "id_uch_step='" . $db->safesql($this->id_uch_step) . "', "
-                    . "id_uch_zvan='" . $db->safesql($this->id_uch_zvan) . "', "
-                    . "id_capacity='" . $db->safesql($this->id_capacity) . "', "
-                    . "speciality='" . $db->safesql($this->speciality) . "', "
-                    . "award='" . $db->safesql($this->award) . "', "
-                    . "biography='" . $db->safesql($this->biography) . "', "
-                    . "pov_kvalif='" . $db->safesql($this->pov_kvalif) . "', "
-                    . "staz='" . $db->safesql($this->staz) . "', "
-                    . "science='" . $db->safesql($this->science) . "', "
-                    . "count_pub='" . $db->safesql($this->count_pub) . "', "
-                    . "top_pub='" . $db->safesql($this->top_pub) . "', "
-                    . "count_trained='" . $db->safesql($this->count_trained) . "', "
-                    . "course='" . $db->safesql($this->course) . "', "
-                    . "address='" . $db->safesql($this->address) . "', "
-                    . "phone='" . $db->safesql($this->phone) . "', "
-                    . "email='" . $db->safesql($this->email) . "', "
-                    . "photo='" . $db->safesql($this->photo) . "', "
-                    . "lastupdate='" . mktime() . "' "
-                    . "WHERE id='" . intval($this->id) . "'";
-//print($update_sql);exit;
-                $db->query($update_sql);
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
     public function getFIOFromDB($id){
         global $db;
@@ -724,6 +741,14 @@ class Person {
         }
 
     }
+    public function getAllPeopleFromDB(){
+        global $db;
+        if($db instanceof db){
+            return $db->query( "SELECT id, family, name, patronymic, id_kafedra FROM " . USERPREFIX . "_people ORDER BY family");
+        }
+        return false;
+    }
+
     public function removePerson($id = 0){
         global $db;
         // Удаляем фотографию
@@ -742,4 +767,91 @@ class Person {
             return FALSE;
         }
     }
+    public function getCountPersonIntoDB(){
+        global $db;
+        if($db instanceof db){
+            $row = $db->super_query( "SELECT COUNT(id) as count FROM " . USERPREFIX . "_people" );
+            return $row['count'];
+        }
+        return false;
+
+    }
+    private function uploadPhoto(){
+        require_once "engine/kafedra/nucleus/functions/default.php";
+        $fileTempName = $_FILES[photo][tmp_name];
+        //Проверка загружаемого файла, расширение gif, jpeg или png
+        $arr_info_img = getimagesize($fileTempName);
+        $AllTypesImage = array('', 'GIF', 'JPG', 'PNG', 'SWF', 'PSD', 'BMP', 'TIFF(байтовый порядок intel)', 'TIFF(байтовый порядок motorola)', 'JPC', 'JP2', 'JPX');
+        $allowTypesImage = array('', 'gif', 'jpeg', 'png');
+        if(!$allowTypesImage[$arr_info_img[2]]){
+            msg("error", "Ошибка", "Разрешена загрузка изображений следующих форматов: GIF, JPG, PNG.<br/>Было загружено изображение с расширением {$AllTypesImage[$arr_info_img[2]]}", "javascript:history.go(-1)");
+            return;
+        }
+        $name = $this->getIdKafedra() . "_" . translation($this->getFamily());
+        $namePhoto = $this->changeSizePhoto($fileTempName, $name);
+        $this->removePhoto();
+        $this->setPhoto($namePhoto);
+    }
+
+    private function changeSizePhoto($file_input, $nameFile) {
+
+        $dir_output  = ROOT_DIR . "/uploads/kafedra/people/";
+
+        if(!is_dir($dir_output)){
+            if (!mkdir($dir_output, 0777, true)) {
+                msg("error", "Ошибка", "Неудается создать директорию для хранения фоторгафий.", "javascript:history.go(-1)");
+                return;
+            }
+        }
+
+        $file_output = $nameFile . "_" . mktime();
+        list($w_i, $h_i, $type) = getimagesize($file_input);
+        if (!$w_i || !$h_i) {
+            msg("error", "Ошибка", "Невозможно получить длину и ширину изображения", "javascript:history.go(-1)");
+            return;
+        }
+        $types = array('', 'gif', 'jpeg', 'png');
+        $ext = $types[$type];
+        if (!$ext) {
+            msg("error", "Ошибка", "Разрешена загрузка изображений следующих форматов: GIF, JPG, PNG", "javascript:history.go(-1)");
+            return;
+        }
+        $func = 'imagecreatefrom' . $ext;
+        $img = $func($file_input);
+
+        // Если картинка чермерно вытянутая
+        if((0.75 * $h_i) > $w_i) {
+            $srcW = $w_i;                       //Высота копируемой области
+            $srcH = round($w_i/0.75);           //Ширина копируемой области
+            $srcY = round(($h_i - $srcH)/2);    //Левый верхний угол
+            $srcX = 0;
+        }
+        // Если картинка приплюснутая
+        else {
+            $srcW = round($h_i*0.75);
+            $srcH = $h_i;
+            $srcX = round(($w_i - $srcW)/2);
+            $srcY = 0;
+        }
+
+        $img_o = imagecreatetruecolor(150, 200);
+        imagecopyresampled($img_o, $img, 0, 0, $srcX, $srcY, 150, 200, $srcW, $srcH);
+
+        if ($type == 2) {
+            if(imagejpeg($img_o,$dir_output.$file_output.".jpg",90)) {
+                return $file_output.".jpg";
+            }else {
+                return '';
+            }
+        } else {
+            $func = 'image'.$ext;
+            if($func($img_o,$dir_output.$file_output.".".$ext)) {
+                return $file_output.".".$ext;
+            }
+            else {
+                return '';
+            }
+        }
+    }
+
 }

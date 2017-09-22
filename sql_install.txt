@@ -1,2 +1,102 @@
 INSERT IGNORE INTO `dle_admin_sections` VALUES (NULL, 'kafedra', '<font color=teal>”правление <u> </u>афедрами </font>', '”правлени€ кафедральными страницами', 'kafedra.png', '1');
 
+
+CREATE TABLE `dle_people` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `family` varchar(50) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `patronymic` varchar(50) NOT NULL,
+  `id_kafedra` int(11) NOT NULL,
+  `skill` int(11) NOT NULL DEFAULT '0' COMMENT '2 - —упер специалист, 1 - ¬едущий специалист, 0 - остальные',
+  `uch_step` int(11) NOT NULL DEFAULT '0' COMMENT '0-Ќет, 1- андидат, 2-ƒоктор',
+  `id_uch_step` int(11) NOT NULL DEFAULT '0',
+  `id_uch_zvan` int(11) NOT NULL DEFAULT '0',
+  `id_capacity` int(11) NOT NULL,
+  `speciality` varchar(255) NOT NULL,
+  `award` text NOT NULL,
+  `biography` text NOT NULL,
+  `pov_kvalif` text NOT NULL,
+  `staz` varchar(20) NOT NULL,
+  `science` text NOT NULL,
+  `count_pub` int(11) NOT NULL,
+  `top_pub` text NOT NULL,
+  `count_trained` int(11) NOT NULL,
+  `course` text NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `phone` varchar(25) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `photo` varchar(100) NOT NULL,
+  `lastupdate` int(11) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 PACK_KEYS=1;
+
+
+
+
+CREATE TABLE `dle_people_capacity` (
+  `id` int(11) NOT NULL,
+  `capacity` varchar(150) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+INSERT INTO `dle_people_capacity` (`id`, `capacity`) VALUES
+(1, 'ректор'),
+(2, 'первый проректор по учебной работе'),
+(3, 'проректор по учебной работе'),
+(4, 'проректор по научной работе'),
+(5, 'проректор по воспитательной работе'),
+(6, 'проректор по безопасности'),
+(7, 'проректор по административно-хоз€йственной работе'),
+(8, 'проректор по капитальному строительству'),
+(9, 'зав. кафедрой'),
+(10, 'профессор'),
+(11, 'доцент'),
+(12, 'ст. преподаватель'),
+(13, 'ассистент'),
+(1001, 'лаборант'),
+(1002, 'техник'),
+(1003, 'учебный мастер'),
+(1004, 'делопроизводитель');
+
+
+CREATE TABLE `dle_people_ustep` (
+  `id` int(11) NOT NULL,
+  `stepen` varchar(50) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+INSERT INTO `dle_people_ustep` (`id`, `stepen`) VALUES
+(1, 'архитектуры'),
+(2, 'биологических наук'),
+(3, 'ветеринарных наук'),
+(4, 'военных наук'),
+(5, 'географических наук'),
+(6, 'геолого-минералогических наук'),
+(7, 'искусствоведени€'),
+(8, 'исторических наук'),
+(9, 'культурологии'),
+(10, 'медицинских наук'),
+(11, 'педагогических наук'),
+(12, 'политических наук'),
+(13, 'психологических наук'),
+(14, 'сельскохоз€йственных наук'),
+(15, 'социологических наук'),
+(16, 'технических наук'),
+(17, 'фармацевтических наук'),
+(18, 'физико-математических наук'),
+(19, 'филологических наук'),
+(20, 'философских наук'),
+(21, 'химических наук'),
+(22, 'экономических наук'),
+(23, 'юридических наук');
+
+
+CREATE TABLE `dle_people_uzvan` (
+  `id` int(11) NOT NULL,
+  `zvanie` varchar(50) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+INSERT INTO `dle_people_uzvan` (`id`, `zvanie`) VALUES
+(1, 'профессор'),
+(2, 'доцент');
+

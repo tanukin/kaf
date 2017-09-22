@@ -28,6 +28,24 @@ class Kafedra{
     private $site;
     private $lastUpdate;
     private $visible;
+    private $dle_id_user;
+
+    /**
+     * @return mixed
+     */
+    public function getDleIdUser()
+    {
+        return $this->dle_id_user;
+    }
+
+    /**
+     * @param mixed $dle_id_user
+     */
+    public function setDleIdUser($dle_id_user)
+    {
+        $this->dle_id_user = $dle_id_user;
+    }
+
 
     /**
      * @return mixed
@@ -420,6 +438,14 @@ class Kafedra{
             $this->setMoreCatKafedra($row['more_cat_kafedra']);
             $this->setVisible($row['visible']);
         }
+    }
+
+    public function getAllKafedraFromDB(){
+        global $db;
+        if($db instanceof db){
+            return $db->query( "SELECT id, name FROM " . USERPREFIX . "_kafedra ORDER BY name");
+        }
+        return false;
     }
 
 
