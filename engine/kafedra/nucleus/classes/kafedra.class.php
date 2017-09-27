@@ -28,6 +28,24 @@ class Kafedra{
     private $site;
     private $lastUpdate;
     private $visible;
+    private $dle_id_user;
+
+    /**
+     * @return mixed
+     */
+    public function getDleIdUser()
+    {
+        return $this->dle_id_user;
+    }
+
+    /**
+     * @param mixed $dle_id_user
+     */
+    public function setDleIdUser($dle_id_user)
+    {
+        $this->dle_id_user = $dle_id_user;
+    }
+
 
     /**
      * @return mixed
@@ -422,5 +440,25 @@ class Kafedra{
         }
     }
 
+    public function getAllKafedraFromDB(){
+        global $db;
+        if($db instanceof db){
+            return $db->query( "SELECT id, name FROM " . USERPREFIX . "_kafedra ORDER BY name");
+        }
+        return false;
+    }
+
+    public function echoSelectList($id){
+        global $db;
+        $r = $this->getAllKafedraFromDB();
+        $select = "<option value='0'> </option>";
+        while ($row = $db->get_row($r)) {
+            $select .= "<option value='{$row['id']}' ";
+            if($row['id'] == $id)
+                $select .= " selected";
+            $select .= ">{$row['name']}</option>";
+        }
+        return $select;
+    }
 
 }

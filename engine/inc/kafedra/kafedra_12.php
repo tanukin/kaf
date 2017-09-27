@@ -17,13 +17,15 @@ if(in_array($a, array('allkaf', 'allpeople')) && file_exists(ROOT_DIR . '/engine
     </div>
 HTML;
 }elseif(empty($_GET['a'])){
+    $header = "";
     $body = "";
+    $modal = "";
     $information = "Возможно разместить в данном блоке информацию по данному модулю, возможно какую то обучающую информацию.";
 }
 
 
 
-function echo_block($header, $body, $modal = '', $information = ''){
+function echo_block($header, $body = null, $modal = null, $information = null){
 
 $text = <<<HTML
 

@@ -6,6 +6,7 @@ if( !defined( 'DATALIFEENGINE' ) OR !defined( 'LOGGED_IN' ) ) {
 if( !$user_group[$member_id['user_group']]['admin_editusers'] ) {
     msg( "error", $lang['index_denied'], $lang['index_denied'] );
 }
+define( 'KN_DIR', ROOT_DIR.'/engine/kafedra/nucleus' );
 
 $id = intval( $_REQUEST['id'] );
 $action = $_REQUEST['action'];
@@ -103,7 +104,9 @@ HTML;
                   <tbody>
 HTML;
         $r = $db->query( "SELECT id, name FROM " . USERPREFIX . "_kafedra ORDER BY name");
-        @require_once 'engine/classes/kafedra.class.php';
+
+        require_once( KN_DIR . '/classes/kafedra.class.php' );
+
         while ($row = $db->get_row($r)) {
             $d = new Kafedra();
             $d->getKafedraFromArray($row);
@@ -292,7 +295,7 @@ HTML;
 //                  <tbody>
 //HTML;
 //        $r = $db->query( "SELECT id, name FROM " . USERPREFIX . "_kafedra ORDER BY name");
-//        @require_once 'engine/classes/kafedra.class.php';
+//        require_once( KN_DIR . '/classes/kafedra.class.php' );
 //        while ($row = $db->get_row($r)) {
 //            $d = new Kafedra();
 //            $d->getKafedraFromArray($row);
