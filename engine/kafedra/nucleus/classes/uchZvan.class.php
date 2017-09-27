@@ -1,74 +1,20 @@
 <?php
 
-
-class UchZvan
+require_once(KC_DIR . '/directoryKafedra.class.php');
+class UchZvan extends DirectoryKafedra
 {
-    private $id;
-    private $zvanie;
-
-
-
-    public function __construct($id = 0)
-    {
-        if($id != 0){
-            $this->getUchZvanieFromDB($id);
-        }
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getZvanie()
-    {
-        return $this->zvanie;
-    }
-
-    /**
-     * @param mixed $zvanie
-     */
-    public function setZvanie($zvanie)
-    {
-        $this->zvanie = trim(htmlspecialchars(strip_tags($zvanie)));
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param mixed $id
-     */
-    public function setId($id)
-    {
-        $this->id = intval($id);
-    }
-
-
-
-    private function getUchZvanieFromDB($id = 0){
-        global $db;
-        $id = intval($id);
-        $row = $db->super_query("SELECT * FROM " . USERPREFIX . "_people_uzvan WHERE id = {$id}  LIMIT 1");
-        if ($row) {
-            $this->getUchZvanieFromRow($row);
-        }
-    }
-    private function getUchZvanieFromRow($row = null){
-        if ($row) {
-            $this->setId($row[id]);
-            $this->setStepen($row[zvanie]);
-        }
-    }
-    public function getAllUchZvanie(){
-        global $db;
-        if($db instanceof db){
-            return $db->query("SELECT id, zvanie FROM " . USERPREFIX . "_people_uzvan ORDER BY zvanie");
+    protected function getDirectoryFromDB($id = null){
+        if(!is_null($id)){
+            global $db;
+            $row = $db->super_query("SELECT id, zvanie as name FROM " . USERPREFIX . "_people_uzvan WHERE id = {$id}  LIMIT 1");
+            parent::getDirectoryFromDB($row);
         }
         return false;
     }
 
+
+    protected function getAllDirectory($sql = null){
+        $sql = "SELECT id, zvanie as name FROM " . USERPREFIX . "_people_uzvan ORDER BY zvanie";
+        return parent::getAllDirectory($sql);
+    }
 }

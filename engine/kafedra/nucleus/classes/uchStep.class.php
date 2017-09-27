@@ -1,71 +1,21 @@
 <?php
 
+require_once(KC_DIR . '/directoryKafedra.class.php');
 
-class UchStep
-{
-    private $id;
-    private $stepen;
+class UchStep extends DirectoryKafedra{
 
-    public function __construct($id = 0)
-{
-    if($id != 0){
-        $this->getUchStepFromDB($id);
-    }
-}
-    /**
-     * @return mixed
-     */
-    public function getStepen()
-    {
-        return $this->stepen;
-    }
-
-    /**
-     * @param mixed $stepen
-     */
-    public function setStepen($stepen)
-    {
-        $this->stepen = trim(htmlspecialchars(strip_tags($stepen)));
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param mixed $id
-     */
-    public function setId($id)
-    {
-        $this->id = intval($id);
+    protected function getDirectoryFromDB($id = null){
+       if(!is_null($id)){
+           global $db;
+           $row = $db->super_query("SELECT id, stepen as name FROM " . USERPREFIX . "_people_ustep WHERE id = {$id}  LIMIT 1");
+           parent::getDirectoryFromDB($row);
+       }
+       return false;
     }
 
 
-
-    private function getUchStepFromDB($id = 0){
-        global $db;
-        $id = intval($id);
-        $row = $db->super_query("SELECT * FROM " . USERPREFIX . "_people_ustep WHERE id = {$id}  LIMIT 1");
-        if ($row) {
-            $this->getUchStepFromRow($row);
-        }
+    protected function getAllDirectory($sql = null){
+        $sql = "SELECT id, stepen as name FROM " . USERPREFIX . "_people_ustep ORDER BY stepen";
+        return parent::getAllDirectory($sql);
     }
-    private function getUchStepFromRow($row = null){
-        if ($row) {
-            $this->setId($row[id]);
-            $this->setStepen($row[stepen]);
-        }
-    }
-    public function getAllUchStep(){
-        global $db;
-        if($db instanceof db){
-            return $db->query( "SELECT id, stepen FROM " . USERPREFIX . "_people_ustep ORDER BY stepen");
-        }
-        return false;
-    }
-
 }

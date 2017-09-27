@@ -448,5 +448,18 @@ class Kafedra{
         return false;
     }
 
+    public function echoSelectList($id){
+        global $db;
+        $r = $this->getAllKafedraFromDB();
+        $select = "<option value='0'> </option>";
+        while ($row = $db->get_row($r)) {
+            $select .= "<option value='{$row['id']}' ";
+            if($row['id'] == $id)
+                $select .= " selected";
+            $select .= ">{$row['name']}</option>";
+        }
+        return $select;
+    }
+
 
 }
